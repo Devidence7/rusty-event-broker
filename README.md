@@ -1,4 +1,4 @@
 # rust-mediator
 
-This is a simple mediator pattern implementation in Rust. 
+This is a simple mediator pattern implementation in Rust. WIP. 
 
