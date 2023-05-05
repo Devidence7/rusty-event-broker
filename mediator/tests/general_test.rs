@@ -1,4 +1,4 @@
-use mediator::{Mediator, Message, MessageHandler, Response};
+use mediator::{Mediator, Message, MessageTransport, Response};
 
 struct A1Message {
     pub name: String,
@@ -27,11 +27,11 @@ impl Message for B1Message {
     }
 }
 
-struct NoHadlerMessage;
+struct NoTransportMessage;
 
-impl Message for NoHadlerMessage {
+impl Message for NoTransportMessage {
     fn name(&self) -> &str {
-        "NoHadlerMessage"
+        "NoTransportMessage"
     }
 }
 
@@ -45,11 +45,11 @@ impl Response for GenericResponse {
     }
 }
 
-struct AHandler {
+struct ATransport {
     messages_to_handle: Vec<String>,
 }
 
-impl MessageHandler for AHandler {
+impl MessageTransport for ATransport {
     fn can_handle(&self, message: &dyn Message) -> bool {
         self.messages_to_handle
             .contains(&message.name().to_string())
@@ -57,16 +57,16 @@ impl MessageHandler for AHandler {
 
     fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
         return Some(Box::new(GenericResponse {
-            data: "AHandler response".to_string(),
+            data: "Transport A response".to_string(),
         }));
     }
 }
 
-struct BHandler {
+struct BTransport {
     messages_to_handle: Vec<String>,
 }
 
-impl MessageHandler for BHandler {
+impl MessageTransport for BTransport {
     fn can_handle(&self, message: &dyn Message) -> bool {
         self.messages_to_handle
             .contains(&message.name().to_string())
@@ -74,20 +74,20 @@ impl MessageHandler for BHandler {
 
     fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
         return Some(Box::new(GenericResponse {
-            data: "BHandler response".to_string(),
+            data: "Transport B response".to_string(),
         }));
     }
 }
 
 #[test]
-fn check_send_multiple_handlers() {
+fn check_send_multiple_transports() {
     let mut mediator = Mediator::new();
 
-    mediator.register_handler(Box::new(AHandler {
+    mediator.register_transport(Box::new(ATransport {
         messages_to_handle: vec!["A1Message".to_string(), "A2Message".to_string()],
     }));
 
-    mediator.register_handler(Box::new(BHandler {
+    mediator.register_transport(Box::new(BTransport {
         messages_to_handle: vec!["B1Message".to_string()],
     }));
 
@@ -98,20 +98,20 @@ fn check_send_multiple_handlers() {
 
     let a2_message = A2Message;
     let b1_message = B1Message;
-    let no_handler_message = NoHadlerMessage;
+    let no_transport_message = NoTransportMessage;
 
     let a1_response = mediator.send(&a1_message);
     assert!(a1_response.is_some());
-    assert_eq!(a1_response.unwrap().data(), "AHandler response");
+    assert_eq!(a1_response.unwrap().data(), "Transport A response");
 
     let a2_response = mediator.send(&a2_message);
     assert!(a2_response.is_some());
-    assert_eq!(a2_response.unwrap().data(), "AHandler response");
+    assert_eq!(a2_response.unwrap().data(), "Transport A response");
 
     let b1_response = mediator.send(&b1_message);
     assert!(b1_response.is_some());
-    assert_eq!(b1_response.unwrap().data(), "BHandler response");
+    assert_eq!(b1_response.unwrap().data(), "Transport B response");
 
-    let no_handler_response = mediator.send(&no_handler_message);
-    assert!(no_handler_response.is_none());
+    let no_transport_response = mediator.send(&no_transport_message);
+    assert!(no_transport_response.is_none());
 }
