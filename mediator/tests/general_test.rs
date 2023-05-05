@@ -1,7 +1,4 @@
-trait Message {
-    // Message name
-    fn name(&self) -> &str;
-}
+use mediator::{Mediator, Message, MessageHandler, Response};
 
 struct A1Message {
     pub name: String,
@@ -38,12 +35,14 @@ impl Message for NoHadlerMessage {
     }
 }
 
-/// Message handler
-/// Knows how to handle a specific message by its name
-trait MessageHandler {
-    fn can_handle(&self, message: &dyn Message) -> bool;
+struct GenericResponse {
+    pub data: String,
+}
 
-    fn handle(&self, message: &dyn Message);
+impl Response for GenericResponse {
+    fn data(&self) -> &str {
+        &self.data
+    }
 }
 
 struct AHandler {
@@ -56,8 +55,10 @@ impl MessageHandler for AHandler {
             .contains(&message.name().to_string())
     }
 
-    fn handle(&self, message: &dyn Message) {
-        println!("AHandler handle {}", message.name());
+    fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
+        return Some(Box::new(GenericResponse {
+            data: "AHandler response".to_string(),
+        }));
     }
 }
 
@@ -71,39 +72,15 @@ impl MessageHandler for BHandler {
             .contains(&message.name().to_string())
     }
 
-    fn handle(&self, message: &dyn Message) {
-        println!("BHandler handle {}", message.name());
+    fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
+        return Some(Box::new(GenericResponse {
+            data: "BHandler response".to_string(),
+        }));
     }
 }
 
-struct Mediator {
-    handlers: Vec<Box<dyn MessageHandler>>,
-}
-
-impl Mediator {
-    fn new() -> Self {
-        Mediator {
-            handlers: Vec::new(),
-        }
-    }
-
-    fn register_handler(&mut self, handler: Box<dyn MessageHandler>) {
-        self.handlers.push(handler);
-    }
-
-    fn handle_message(&self, message: &dyn Message) {
-        for handler in &self.handlers {
-            if handler.can_handle(message) {
-                handler.handle(message);
-                return; // Should be only one handler per message
-            }
-        }
-
-        println!("No handler for {}", message.name());
-    }
-}
-
-fn main() {
+#[test]
+fn check_send_multiple_handlers() {
     let mut mediator = Mediator::new();
 
     mediator.register_handler(Box::new(AHandler {
@@ -123,8 +100,18 @@ fn main() {
     let b1_message = B1Message;
     let no_handler_message = NoHadlerMessage;
 
-    mediator.handle_message(&a1_message);
-    mediator.handle_message(&a2_message);
-    mediator.handle_message(&b1_message);
-    mediator.handle_message(&no_handler_message);
+    let a1_response = mediator.send(&a1_message);
+    assert!(a1_response.is_some());
+    assert_eq!(a1_response.unwrap().data(), "AHandler response");
+
+    let a2_response = mediator.send(&a2_message);
+    assert!(a2_response.is_some());
+    assert_eq!(a2_response.unwrap().data(), "AHandler response");
+
+    let b1_response = mediator.send(&b1_message);
+    assert!(b1_response.is_some());
+    assert_eq!(b1_response.unwrap().data(), "BHandler response");
+
+    let no_handler_response = mediator.send(&no_handler_message);
+    assert!(no_handler_response.is_none());
 }
