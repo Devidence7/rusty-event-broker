@@ -1,68 +1,130 @@
-// Define the message types
-trait Message: std::fmt::Debug {}
-
-#[derive(Debug)]
-struct PingMessage;
-
-impl Message for PingMessage {}
-
-#[derive(Debug)]
-struct PongMessage;
-
-impl Message for PongMessage {}
-
-// Define the handler trait
-trait MessageHandler {
-    fn handle(&self, message: &dyn Message);
+trait Message {
+    // Message name
+    fn name(&self) -> &str;
 }
 
-// Define the in-memory handler
-struct InMemoryHandler;
+struct A1Message {
+    pub name: String,
+    pub age: u8,
+}
 
-impl MessageHandler for InMemoryHandler {
-    fn handle(&self, message: &dyn Message) {
-        println!("Handling message: {:?}", message);
+impl Message for A1Message {
+    fn name(&self) -> &str {
+        "A1Message"
     }
 }
 
-// Define the mediator
-struct Mediator<'a> {
-    handlers: Vec<Box<dyn MessageHandler + 'a>>,
+struct A2Message;
+
+impl Message for A2Message {
+    fn name(&self) -> &str {
+        "A2Message"
+    }
 }
 
-impl<'a> Mediator<'a> {
+struct B1Message;
+
+impl Message for B1Message {
+    fn name(&self) -> &str {
+        "B1Message"
+    }
+}
+
+struct NoHadlerMessage;
+
+impl Message for NoHadlerMessage {
+    fn name(&self) -> &str {
+        "NoHadlerMessage"
+    }
+}
+
+/// Message handler
+/// Knows how to handle a specific message by its name
+trait MessageHandler {
+    fn can_handle(&self, message: &dyn Message) -> bool;
+
+    fn handle(&self, message: &dyn Message);
+}
+
+struct AHandler {
+    messages_to_handle: Vec<String>,
+}
+
+impl MessageHandler for AHandler {
+    fn can_handle(&self, message: &dyn Message) -> bool {
+        self.messages_to_handle
+            .contains(&message.name().to_string())
+    }
+
+    fn handle(&self, message: &dyn Message) {
+        println!("AHandler handle {}", message.name());
+    }
+}
+
+struct BHandler {
+    messages_to_handle: Vec<String>,
+}
+
+impl MessageHandler for BHandler {
+    fn can_handle(&self, message: &dyn Message) -> bool {
+        self.messages_to_handle
+            .contains(&message.name().to_string())
+    }
+
+    fn handle(&self, message: &dyn Message) {
+        println!("BHandler handle {}", message.name());
+    }
+}
+
+struct Mediator {
+    handlers: Vec<Box<dyn MessageHandler>>,
+}
+
+impl Mediator {
     fn new() -> Self {
         Mediator {
             handlers: Vec::new(),
         }
     }
 
-    fn add_handler<T>(&mut self, handler: T)
-    where
-        T: MessageHandler + 'a,
-    {
-        self.handlers.push(Box::new(handler));
+    fn register_handler(&mut self, handler: Box<dyn MessageHandler>) {
+        self.handlers.push(handler);
     }
 
-    fn send(&self, message: Box<dyn Message>) {
+    fn handle_message(&self, message: &dyn Message) {
         for handler in &self.handlers {
-            handler.handle(&*message);
+            if handler.can_handle(message) {
+                handler.handle(message);
+                return; // Should be only one handler per message
+            }
         }
+
+        println!("No handler for {}", message.name());
     }
 }
 
 fn main() {
-    // Create a mediator
     let mut mediator = Mediator::new();
 
-    // Register the in-memory handler
-    let in_memory_handler = InMemoryHandler;
-    mediator.add_handler(in_memory_handler);
+    mediator.register_handler(Box::new(AHandler {
+        messages_to_handle: vec!["A1Message".to_string(), "A2Message".to_string()],
+    }));
 
-    // Send messages
-    let ping_message: Box<dyn Message> = Box::new(PingMessage);
-    mediator.send(ping_message);
+    mediator.register_handler(Box::new(BHandler {
+        messages_to_handle: vec!["B1Message".to_string()],
+    }));
 
-    let pong_message: Box<dyn Message> = Box::new(PongMessage);
-    mediator.send(pong_message);
+    let a1_message = A1Message {
+        name: "something".to_string(),
+        age: 10,
+    };
+
+    let a2_message = A2Message;
+    let b1_message = B1Message;
+    let no_handler_message = NoHadlerMessage;
+
+    mediator.handle_message(&a1_message);
+    mediator.handle_message(&a2_message);
+    mediator.handle_message(&b1_message);
+    mediator.handle_message(&no_handler_message);
 }
