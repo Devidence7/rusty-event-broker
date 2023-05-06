@@ -1,8 +1,9 @@
-# rust-mediator
+# RustyEventBroker 
+A mediator library that brokers the communication between different message transports.
 
-This is a personal playground for learning Rust. 
+:construction: This is a personal playground for learning Rust. 
 It is a simple mediator pattern implementation. 
-It is not intended for production use, at least not yet.
+It is not intended for production use, at least not yet. :construction:
 
 ## Usage
 
