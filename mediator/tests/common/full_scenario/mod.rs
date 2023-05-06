@@ -1,20 +1,17 @@
 use mediator::Broker;
 
-use self::transports::{ATransport, BTransport};
+use self::{handlers::A1RequestHandler, transports::ATransport};
 
+pub mod handlers;
 pub mod requests;
 pub mod transports;
 
 pub fn setup() -> Broker {
-    let mut mediator = Broker::new();
+    let mut broker = Broker::new();
 
-    mediator.register_exit_transport(Box::new(ATransport {
-        messages_to_handle: vec!["A1Message".to_string(), "A2Message".to_string()],
-    }));
+    broker.register_exit_transport(Box::new(ATransport::new()));
 
-    mediator.register_exit_transport(Box::new(BTransport {
-        messages_to_handle: vec!["B1Message".to_string()],
-    }));
+    broker.register_request_handler(&A1RequestHandler {});
 
-    return mediator;
+    return broker;
 }

@@ -1,4 +1,6 @@
-use crate::{EntryTransport, Event, ExitTransport, Response};
+use std::rc::Rc;
+
+use crate::{EntryTransport, ExitTransport, Request, RequestHandler, Response};
 
 pub struct Broker {
     exit_transports: Vec<Box<dyn ExitTransport>>,
@@ -21,9 +23,9 @@ impl Broker {
         self.entry_transports.push(transport);
     }
 
-    pub fn send(&self, message: &dyn Event) -> Option<Box<dyn Response>> {
-        for transport in &self.exit_transports {
-            if transport.can_handle(message) {
+    pub fn request(&mut self, message: Rc<dyn Request>) -> Option<Rc<dyn Response>> {
+        for transport in self.exit_transports.iter_mut() {
+            if transport.can_handle_request(message.clone()) {
                 return transport.request(message);
             }
         }
@@ -31,11 +33,9 @@ impl Broker {
         None
     }
 
-    pub fn publish(&self, message: &dyn Event) {
-        for transport in &self.exit_transports {
-            if transport.can_handle(message) {
-                transport.publish(message);
-            }
+    pub fn register_request_handler(&mut self, handler: &dyn RequestHandler) {
+        for transport in &mut self.entry_transports {
+            transport.register_request_handler(handler);
         }
     }
 }

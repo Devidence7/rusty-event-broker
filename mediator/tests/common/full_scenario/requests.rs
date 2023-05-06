@@ -1,11 +1,11 @@
-use mediator::{Event, Response};
+use mediator::{Request, Response};
 
 pub struct A1Message {
     pub name: String,
     pub age: u8,
 }
 
-impl Event for A1Message {
+impl Request for A1Message {
     fn name(&self) -> &str {
         "A1Message"
     }
@@ -13,7 +13,7 @@ impl Event for A1Message {
 
 pub struct A2Message;
 
-impl Event for A2Message {
+impl Request for A2Message {
     fn name(&self) -> &str {
         "A2Message"
     }
@@ -21,7 +21,7 @@ impl Event for A2Message {
 
 pub struct B1Message;
 
-impl Event for B1Message {
+impl Request for B1Message {
     fn name(&self) -> &str {
         "B1Message"
     }
@@ -29,7 +29,7 @@ impl Event for B1Message {
 
 pub struct NoTransportMessage;
 
-impl Event for NoTransportMessage {
+impl Request for NoTransportMessage {
     fn name(&self) -> &str {
         "NoTransportMessage"
     }
