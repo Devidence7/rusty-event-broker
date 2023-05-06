@@ -1,15 +1,6 @@
 use super::requests::GenericResponse;
 use mediator::{ExitTransport, Request, Response};
 use std::rc::Rc;
-use std::sync::LazyLock;
-
-static HASHMAP: LazyLock<HashMap<i32, String>> = LazyLock::new(|| {
-    println!("initializing");
-    let mut m = HashMap::new();
-    m.insert(13, "Spica".to_string());
-    m.insert(74, "Hoyten".to_string());
-    m
-});
 
 pub struct ATransport {
     pub allowed_requests: Vec<String>,
