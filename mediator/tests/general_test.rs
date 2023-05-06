@@ -1,11 +1,11 @@
-use mediator::{Mediator, Message, MessageTransport, Response};
+use mediator::{Event, Mediator, Response, Transport};
 
 struct A1Message {
     pub name: String,
     pub age: u8,
 }
 
-impl Message for A1Message {
+impl Event for A1Message {
     fn name(&self) -> &str {
         "A1Message"
     }
@@ -13,7 +13,7 @@ impl Message for A1Message {
 
 struct A2Message;
 
-impl Message for A2Message {
+impl Event for A2Message {
     fn name(&self) -> &str {
         "A2Message"
     }
@@ -21,7 +21,7 @@ impl Message for A2Message {
 
 struct B1Message;
 
-impl Message for B1Message {
+impl Event for B1Message {
     fn name(&self) -> &str {
         "B1Message"
     }
@@ -29,7 +29,7 @@ impl Message for B1Message {
 
 struct NoTransportMessage;
 
-impl Message for NoTransportMessage {
+impl Event for NoTransportMessage {
     fn name(&self) -> &str {
         "NoTransportMessage"
     }
@@ -49,13 +49,13 @@ struct ATransport {
     messages_to_handle: Vec<String>,
 }
 
-impl MessageTransport for ATransport {
-    fn can_handle(&self, message: &dyn Message) -> bool {
+impl Transport for ATransport {
+    fn can_handle(&self, message: &dyn Event) -> bool {
         self.messages_to_handle
             .contains(&message.name().to_string())
     }
 
-    fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
+    fn send(&self, _message: &dyn Event) -> Option<Box<dyn Response>> {
         return Some(Box::new(GenericResponse {
             data: "Transport A response".to_string(),
         }));
@@ -66,13 +66,13 @@ struct BTransport {
     messages_to_handle: Vec<String>,
 }
 
-impl MessageTransport for BTransport {
-    fn can_handle(&self, message: &dyn Message) -> bool {
+impl Transport for BTransport {
+    fn can_handle(&self, message: &dyn Event) -> bool {
         self.messages_to_handle
             .contains(&message.name().to_string())
     }
 
-    fn send(&self, _message: &dyn Message) -> Option<Box<dyn Response>> {
+    fn send(&self, _message: &dyn Event) -> Option<Box<dyn Response>> {
         return Some(Box::new(GenericResponse {
             data: "Transport B response".to_string(),
         }));
