@@ -11,5 +11,5 @@ pub trait ExitTransport {
 pub trait EntryTransport {
     fn listen(&self);
 
-    fn register_request_handler(&mut self, handler: &dyn RequestHandler);
+    fn register_request_handler(&mut self, handler: Rc<dyn RequestHandler>);
 }
