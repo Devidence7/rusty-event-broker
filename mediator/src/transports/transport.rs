@@ -1,15 +1,17 @@
-use std::rc::Rc;
+use async_trait::async_trait;
+use std::sync::Arc;
 
 use crate::{Request, RequestHandler, Response};
 
+#[async_trait]
 pub trait ExitTransport {
-    fn can_handle_request(&self, message: Rc<dyn Request>) -> bool;
+    fn can_handle_request(&self, message: &dyn Request) -> bool;
 
-    fn request(&mut self, message: Rc<dyn Request>) -> Option<Rc<dyn Response>>;
+    async fn handle(self, request: Box<dyn Request>) -> Result<Box<dyn Response>, ()>;
 }
 
 pub trait EntryTransport {
-    fn listen(&self);
+    fn listen(&mut self);
 
-    fn register_request_handler(&mut self, handler: Rc<dyn RequestHandler>);
+    fn register_request_handler(&mut self, handler: Arc<dyn RequestHandler>);
 }

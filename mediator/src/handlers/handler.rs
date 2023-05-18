@@ -1,16 +1,29 @@
 use crate::{Request, Response};
-use std::rc::Rc;
+use async_trait::async_trait;
+use std::sync::Arc;
 
-/// Handler is an interface to provide a common way to handle requests (commands and queries).
-pub trait RequestHandler {
-    fn handle(&self, request: Rc<dyn Request>) -> Option<Rc<dyn Response>>;
-
-    fn name(&self) -> &str;
+pub trait MessageHandler {
+    fn handle_message_name(self) -> &'static str;
 }
 
-/// EventHandler is an interface to provide a common way to handle events.
-pub trait EventHandler {
-    fn handle(&self, request: &dyn Request) -> &dyn Response;
+/// This macro implements the MessageHandler trait for the given type.
+/// Should be use as follows:
+/// ```
+/// impl_message_handler!(MyMessageHandler, "MyMessage");
+/// struct MyMessageHandler {}
+/// ```
+#[macro_export]
+macro_rules! impl_message_handler {
+    ($handler:ty, $message_name:expr) => {
+        impl $crate::MessageHandler for $handler {
+            fn handle_message_name(self) -> &'static str {
+                $message_name
+            }
+        }
+    };
+}
 
-    fn name(&self) -> &str;
+#[async_trait]
+pub trait RequestHandler {
+    async fn handle(self, request: Box<dyn Request>) -> Result<Box<dyn Response>, ()>;
 }

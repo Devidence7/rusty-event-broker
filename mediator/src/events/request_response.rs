@@ -1,4 +1,4 @@
-pub trait Request {
+pub trait Request: Send {
     fn name(&self) -> &str;
 }
 

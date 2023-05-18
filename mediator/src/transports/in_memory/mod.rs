@@ -1,50 +1,31 @@
+use async_trait::async_trait;
+use std::collections::HashMap;
+use std::hash::Hash;
 use std::rc::Rc;
+use std::sync::Mutex;
+use std::{collections::VecDeque, sync::Arc};
 
 use crate::{EntryTransport, ExitTransport, Request, RequestHandler, Response};
 
-pub struct InMemoryTransport {
-    message_queue: std::collections::VecDeque<Rc<dyn Request>>,
-    request_handlers: std::collections::HashMap<String, Rc<dyn RequestHandler>>,
+pub struct InMemoryQueueTransport {
+    request_handlers: HashMap<String, Arc<dyn RequestHandler>>,
+    request_queue: VecDeque<Box<dyn Request>>,
 }
 
-impl InMemoryTransport {
-    pub fn new() -> InMemoryTransport {
-        return InMemoryTransport {
-            message_queue: std::collections::VecDeque::new(),
-            request_handlers: std::collections::HashMap::new(),
-        };
+#[async_trait]
+impl ExitTransport for InMemoryQueueTransport {
+    fn can_handle_request(&self, message: &dyn Request) -> bool {
+        todo!();
     }
+
+    async fn handle(self, request: Box<dyn Request>) -> Result<Box<dyn Response>, ()> {}
 }
 
-impl ExitTransport for InMemoryTransport {
-    fn can_handle_request(&self, message: Rc<dyn Request>) -> bool {
-        let handler = self.request_handlers.get(message.name());
+impl EntryTransport for InMemoryQueueTransport {
+    fn listen(&mut self) {}
 
-        return handler.is_some();
-    }
-
-    fn request(&mut self, message: Rc<dyn Request>) -> Option<Rc<dyn Response>> {
-        let handler = self.request_handlers.get(message.name());
-
-        if handler.is_none() {
-            return None;
-        }
-
-        let handler = handler.unwrap();
-
-        let response = handler.handle(message);
-
-        return response;
-    }
-}
-
-impl EntryTransport for InMemoryTransport {
-    fn listen(&self) {
-        todo!()
-    }
-
-    fn register_request_handler(&mut self, handler: Rc<dyn RequestHandler>) {
+    fn register_request_handler(&mut self, handler: Arc<dyn RequestHandler>) {
         self.request_handlers
-            .insert(handler.name().to_string(), handler);
+            .insert(handler.handle_message_name().to_string(), handler);
     }
 }
