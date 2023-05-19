@@ -1,50 +1,38 @@
-use mediator::{Request, Response};
+use mediator::{MessageName, Request, Response};
+use mediator_macros::message_name;
 
+#[message_name("A1Request")]
+pub struct A1Message {}
 pub struct A1Message {
     pub name: String,
     pub age: u8,
 }
 
-impl Request for A1Message {
-    fn name(&self) -> &str {
-        "A1Message"
-    }
-}
+impl Request for A1Message {}
 
-pub struct A2Message;
+#[message_name("A2Request")]
+pub struct A2Message {}
+pub struct A2Message {}
 
-impl Request for A2Message {
-    fn name(&self) -> &str {
-        "A2Message"
-    }
-}
+impl Request for A2Message {}
 
-pub struct B1Message;
+#[message_name("B1Request")]
+pub struct B1Message {}
+pub struct B1Message {}
 
-impl Request for B1Message {
-    fn name(&self) -> &str {
-        "B1Message"
-    }
-}
+impl Request for B1Message {}
 
-pub struct NoTransportMessage;
+#[message_name("NoTransportRequest")]
 
-impl Request for NoTransportMessage {
-    fn name(&self) -> &str {
-        "NoTransportMessage"
-    }
-}
+pub struct NoTransportMessage {}
+pub struct NoTransportMessage {}
 
+impl Request for NoTransportMessage {}
+
+#[message_name("GenericResponse")]
+pub struct GenericResponse {}
 pub struct GenericResponse {
     pub data: String,
 }
 
-impl Response for GenericResponse {
-    fn data(&self) -> &str {
-        &self.data
-    }
-
-    fn name(&self) -> &str {
-        "GenericResponse"
-    }
-}
+impl Response for GenericResponse {}

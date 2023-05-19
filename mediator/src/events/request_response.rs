@@ -1,10 +1,5 @@
-pub trait Request: Send {
-    fn name(&self) -> &str;
-}
+use crate::MessageName;
 
-pub trait Response {
-    fn name(&self) -> &str;
+pub trait Request: MessageName {}
 
-    // TODO: Change this
-    fn data(&self) -> &str;
-}
+pub trait Response: MessageName {}

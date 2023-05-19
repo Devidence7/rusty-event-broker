@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.68"
+futures = "0.3.17"
+mediator_macros = { path = "../mediator_macros" }
+
+
+[features]
+return_position_impl_trait_in_trait = []

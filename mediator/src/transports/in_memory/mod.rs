@@ -1,31 +1,62 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::hash::Hash;
-use std::rc::Rc;
-use std::sync::Mutex;
 use std::{collections::VecDeque, sync::Arc};
 
 use crate::{EntryTransport, ExitTransport, Request, RequestHandler, Response};
 
-pub struct InMemoryQueueTransport {
-    request_handlers: HashMap<String, Arc<dyn RequestHandler>>,
-    request_queue: VecDeque<Box<dyn Request>>,
+pub struct InMemoryTransport {
+    handlers: HashMap<String, Arc<dyn RequestHandler<dyn Request, dyn Response>>>,
+    queue: VecDeque<Arc<dyn Request>>,
+}
+
+impl InMemoryTransport {
+    pub fn new() -> Self {
+        InMemoryTransport {
+            handlers: HashMap::new(),
+            queue: VecDeque::new(),
+        }
+    }
+}
+
+impl EntryTransport for InMemoryTransport {
+    fn register_request_handler(
+        &mut self,
+        handler: Arc<dyn RequestHandler<dyn Request, dyn Response>>,
+    ) {
+        self.handlers
+            .insert(handler.message_name().to_string(), handler);
+    }
 }
 
 #[async_trait]
-impl ExitTransport for InMemoryQueueTransport {
-    fn can_handle_request(&self, message: &dyn Request) -> bool {
-        todo!();
-    }
+impl ExitTransport for InMemoryTransport {
+    async fn request<TRequest, TResponse>(
+        &self,
+        request: Arc<TRequest>,
+    ) -> Result<Arc<TResponse>, String>
+    where
+        TRequest: Request,
+        TResponse: Response,
+    {
+        let binding = self.handlers.get(request.message_name()).ok_or_else(|| {
+            format!(
+                "No handler registered for message {}",
+                request.message_name()
+            )
+        })?;
 
-    async fn handle(self, request: Box<dyn Request>) -> Result<Box<dyn Response>, ()> {}
-}
+        let handler = binding
+            .as_any()
+            .downcast_ref::<&dyn RequestHandler<TRequest, TResponse>>()
+            .ok_or_else(|| {
+                format!(
+                    "Handler for message {} is not of the correct type",
+                    request.message_name()
+                )
+            })?;
 
-impl EntryTransport for InMemoryQueueTransport {
-    fn listen(&mut self) {}
+        let response = handler.handle_request(request).await;
 
-    fn register_request_handler(&mut self, handler: Arc<dyn RequestHandler>) {
-        self.request_handlers
-            .insert(handler.handle_message_name().to_string(), handler);
+        Ok(response)
     }
 }

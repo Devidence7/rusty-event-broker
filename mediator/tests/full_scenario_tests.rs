@@ -13,9 +13,9 @@ fn multiple_transports_test() {
         age: 10,
     };
 
-    let a2_message = A2Message;
-    let b1_message = B1Message;
-    let no_transport_message = NoTransportMessage;
+    let a2_message = A2Message {};
+    let b1_message = B1Message {};
+    let no_transport_message = NoTransportMessage {};
 
     let a1_response = broker.request(a1_message);
 }
