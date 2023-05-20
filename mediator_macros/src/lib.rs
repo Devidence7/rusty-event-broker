@@ -1,93 +1,45 @@
-extern crate proc_macro;
-
 use proc_macro::TokenStream;
 use quote::quote;
-use std::collections::HashSet as Set;
-use syn::parse::{Parse, ParseStream, Result};
-use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, Ident, ItemFn, Token};
+use syn::{parse_macro_input, Ident, ItemStruct};
 
-struct ArgsHoldingIdents {
-    idents: Set<Ident>,
-}
-
-impl Parse for ArgsHoldingIdents {
-    fn parse(args: ParseStream) -> Result<Self> {
-        let vars = Punctuated::<Ident, Token![,]>::parse_terminated(args)?;
-        Ok(ArgsHoldingIdents {
-            idents: vars.into_iter().collect(),
-        })
-    }
-}
-
-/// This macro is used to generate the implementation of the MessageName trait for a struct.
-/// ```rust
-/// #[message_name("A1Request")]
-/// ```
-
+/// Implement the trait MessageName for the given struct.
+/// Example:
+/// #[message(message_name)]
 #[proc_macro_attribute]
-pub fn message_name(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let attr_name: syn::LitStr = syn::parse(attr).unwrap();
-    let ast = syn::parse(item).unwrap();
+pub fn message(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input_struct = parse_macro_input!(input as ItemStruct);
+    let struct_name = input_struct.ident.clone();
 
-    let gen = impl_message_name(&ast, &attr_name);
+    // Parse the name of the message
+    let input_args = parse_macro_input!(args as Ident);
+    let message_name = input_args.to_string();
 
-    gen
-}
-
-fn impl_message_name(ast: &syn::DeriveInput, attr_name: &syn::LitStr) -> TokenStream {
-    let name = &ast.ident;
-    let gen = quote! {
-        impl MessageName for #name {
-            fn message_name(&self) -> &'static str {
-                #attr_name
-            }
+    // Create the `message_name` method.
+    let message_name_impl = quote! {
+        fn message_name(&self) -> &'static str {
+            #message_name
         }
     };
-    gen.into()
-}
 
-/// Macro for implementing a handler for a request.
-/// Should be use like this:
-/// ```rust
-/// request_handler!(A1RequestHandler, (message: A1Request) => {
-///    // Do something with the message
-///  // Return a response
-/// });
-/// ```
-///
-/// The macro will generate the following code:
-/// ```rust
-/// #[message_handler("A1Request")]
-/// pub struct A1RequestHandler {}
-/// pub struct A1RequestHandler {}
-///
-/// #[async_trait]
-/// impl RequestHandler for A1RequestHandler {
-///    async fn handle_request(&self, _request: Arc<dyn Request>) -> Arc<dyn Response> {
-///       // Do something with the message
-///      // Return a response
-///   }
-/// }
-/// ```
-
-#[proc_macro]
-pub fn request_handler(item: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(item as ItemFn);
-    let name = &ast.sig.ident;
-    let args = &ast.sig.inputs;
-    let body = &ast.block;
-    let gen = quote! {
-        #[message_handler(#name)]
-        pub struct #name {}
-        pub struct #name {}
-
-        #[async_trait]
-        impl RequestHandler for #name {
-            async fn handle_request(&self, _request: Arc<dyn Request>) -> Arc<dyn Response> {
-                #body
-            }
+    // Create the `as_any` method.
+    let as_any_impl = quote! {
+        fn as_any(&self) -> &dyn std::any::Any {
+            self
         }
     };
-    gen.into()
+
+    // Implement the trait for the struct.
+    let impl_block = quote! {
+        impl MessageName for #struct_name {
+            #message_name_impl
+            #as_any_impl
+        }
+    };
+
+    let output = quote! {
+        #input_struct
+        #impl_block
+    };
+
+    output.into()
 }

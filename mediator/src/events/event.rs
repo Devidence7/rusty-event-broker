@@ -1,4 +1,4 @@
-use std::{any::Any, sync::Arc};
+use std::any::Any;
 
 pub trait MessageName: Send + Sync + 'static {
     fn message_name(&self) -> &'static str;

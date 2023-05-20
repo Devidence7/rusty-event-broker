@@ -1,19 +1,17 @@
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::{collections::VecDeque, sync::Arc};
+use std::sync::Arc;
 
 use crate::{EntryTransport, ExitTransport, Request, RequestHandler, Response};
 
 pub struct InMemoryTransport {
     handlers: HashMap<String, Arc<dyn RequestHandler<dyn Request, dyn Response>>>,
-    queue: VecDeque<Arc<dyn Request>>,
 }
 
 impl InMemoryTransport {
     pub fn new() -> Self {
         InMemoryTransport {
             handlers: HashMap::new(),
-            queue: VecDeque::new(),
         }
     }
 }
