@@ -1,12 +1,14 @@
-# RustyEventBroker 
+# RustyEventBroker
+
 A mediator library that brokers the communication between different message transports.
 
-:construction: This is a personal playground for learning Rust. 
-It is a simple mediator pattern implementation. 
+:construction: This is a personal playground for learning Rust.
+It is a simple mediator pattern implementation.
 It is not intended for production use, at least not yet. :construction:
 
 ## Usage
-First define your transports and your message handlers. 
+
+First define your transports and your message handlers.
 
 ```rust
     let mut broker = Broker::new();
@@ -19,9 +21,10 @@ First define your transports and your message handlers.
     broker.register_request_handler(Rc::new(A1RequestHandler {}));
     broker.register_request_handler(Rc::new(A2RequestHandler {}));
     broker.register_request_handler(Rc::new(B1RequestHandler {}));
-```	
+```
 
-Example of a message handler. 
+Example of a message handler.
+
 ```rust
 impl RequestHandler for A1RequestHandler {
     fn handle(&self, _request: Rc<dyn Request>) -> Option<Rc<dyn Response>> {
@@ -66,12 +69,11 @@ Then send your messages.
     assert!(no_transport_response.is_none());
 ```
 
-
 ## Roadmap
 
-- [X] Add handlers
-- [X] Add request support
-- [ ] Add request async support
+- [x] Add handlers
+- [x] Add request support
+- [ ] Add request async support. Requires [rust trait async suport](https://blog.rust-lang.org/inside-rust/2023/05/03/stabilizing-async-fn-in-trait.html)
 - [ ] Add request timeout
 - [ ] Add publish support
 - [ ] Add send support
@@ -81,8 +83,6 @@ Then send your messages.
 - [ ] Add transport support for RabbitMQ
 - [ ] Think about routing preferences (e.g. prefer in memory over RabbitMQ, because of performance reasons)
 
-
-
 ## License
 
 Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
@@ -90,10 +90,3 @@ Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses
 ### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, shall be licensed as above, without any additional terms or conditions.
-
-
-
-
-
-
-
