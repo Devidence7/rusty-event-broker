@@ -11,13 +11,13 @@ It is not intended for production use, at least not yet. :construction:
 Declare your messages.
 
 ```rust
-#[message(A1RequestName)]
+#[message("A1RequestMessageName")]
 struct A1Request {
     name: String,
     age: u8,
 }
 
-#[message(A1Response)]
+#[message("A1ResponseMessageName")]
 struct A1Response {
     data: String,
 }
@@ -26,7 +26,7 @@ struct A1Response {
 Declare your message handler.
 
 ```rust
-#[request_handler(A1RequestHandler, A1RequestName)]
+#[request_handler(A1RequestHandler, "A1RequestMessageName", "A1ResponseMessageName")]
 fn handle_request(&self, request: Arc<A1Request>) -> Result<Arc<A1Response>, String> {
     Ok(Arc::new(A1Response {
         data: "A1 Handler Response".to_string(),
