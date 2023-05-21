@@ -23,19 +23,26 @@ impl Broker {
         self.entry_transports.push(transport);
     }
 
-    pub fn handle_request(
+    pub fn handle_request<'a, TRequest, TResponse>(
         &self,
-        request: Arc<dyn MessageName>,
-    ) -> Result<Arc<dyn MessageName>, String> {
+        request: TRequest,
+    ) -> Result<Arc<dyn MessageName>, String>
+    where
+        TRequest: MessageName + 'static,
+        TResponse: MessageName + 'static,
+    {
         // TODO: Find exit transport that can handle request
         let transport = self.exit_transports[0].clone();
 
         // Tranform Transport into ExitTransport
         let exit_transport = transport as Arc<Mutex<dyn ExitTransport>>;
 
-        // Send request to exit transport
-        let response = exit_transport.lock().unwrap().request(request);
+        // Create a let binding for the response object
+        let response = {
+            let request = Arc::new(request);
+            exit_transport.lock().unwrap().request(request)?
+        };
 
-        response
+        return Ok(response);
     }
 }

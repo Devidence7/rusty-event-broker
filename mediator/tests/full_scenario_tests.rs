@@ -1,9 +1,6 @@
 #![feature(lazy_cell)]
 
-use std::sync::Arc;
-
-use common::full_scenario::setup;
-use mediator::{Broker, MessageName};
+use mediator::Broker;
 
 use crate::common::full_scenario::requests::*;
 
@@ -22,45 +19,51 @@ fn multiple_transports_test() {
     let b1_request = B1Request {};
     let no_transport_request = NoTransportRequest {};
 
-    let a1_response_result: Result<Arc<dyn MessageName>, String> =
-        broker.handle_request(Arc::new(a1_request));
-
+    let a1_response_result = broker.handle_request::<A1Request, GenericResponse>(a1_request);
     assert!(a1_response_result.is_ok());
-    let a1_response: Arc<dyn MessageName> = a1_response_result.unwrap();
-    let generic_response = a1_response
-        .as_any()
-        .downcast_ref::<GenericResponse>()
-        .unwrap();
-    assert_eq!(generic_response.data, "A1RequestHandler: A1RequestName");
-
-    let a2_response_result: Result<Arc<dyn MessageName>, String> =
-        broker.handle_request(Arc::new(a2_request));
-    assert!(a2_response_result.is_ok());
-    let a2_response: Arc<dyn MessageName> = a2_response_result.unwrap();
-    let generic_response = a2_response
-        .as_any()
-        .downcast_ref::<GenericResponse>()
-        .unwrap();
-    assert_eq!(generic_response.data, "A2RequestHandler: A2RequestName");
-
-    let b1_response_result: Result<Arc<dyn MessageName>, String> =
-        broker.handle_request(Arc::new(b1_request));
-    assert!(b1_response_result.is_ok());
-    let b1_response: Arc<dyn MessageName> = b1_response_result.unwrap();
-    let generic_response = b1_response
-        .as_any()
-        .downcast_ref::<GenericResponse>()
-        .unwrap();
-    assert_eq!(generic_response.data, "B1RequestHandler: B1RequestName");
-
-    let no_transport_response_result: Result<Arc<dyn MessageName>, String> =
-        broker.handle_request(Arc::new(no_transport_request));
-    assert!(no_transport_response_result.is_err());
-    let error = no_transport_response_result.err().unwrap();
+    let a1_response = a1_response_result.unwrap();
+    assert_eq!(a1_response.message_name(), "GenericResponseName");
     assert_eq!(
-        error,
-        "No transport found for message: NoTransportRequestName"
+        a1_response
+            .as_any()
+            .downcast_ref::<GenericResponse>()
+            .unwrap()
+            .data,
+        "A1RequestHandler: A1RequestName"
     );
 
-    setup();
+    let a2_response_result = broker.handle_request::<A2Request, GenericResponse>(a2_request);
+    assert!(a2_response_result.is_ok());
+    let a2_response = a2_response_result.unwrap();
+    assert_eq!(a2_response.message_name(), "GenericResponseName");
+    assert_eq!(
+        a2_response
+            .as_any()
+            .downcast_ref::<GenericResponse>()
+            .unwrap()
+            .data,
+        "A2RequestHandler: A2RequestName"
+    );
+
+    let b1_response_result = broker.handle_request::<B1Request, GenericResponse>(b1_request);
+    assert!(b1_response_result.is_ok());
+    let b1_response = b1_response_result.unwrap();
+    assert_eq!(b1_response.message_name(), "GenericResponseName");
+    assert_eq!(
+        b1_response
+            .as_any()
+            .downcast_ref::<GenericResponse>()
+            .unwrap()
+            .data,
+        "B1RequestHandler: B1RequestName"
+    );
+
+    let no_transport_response_result =
+        broker.handle_request::<NoTransportRequest, GenericResponse>(no_transport_request);
+    assert!(no_transport_response_result.is_err());
+    let no_transport_response = no_transport_response_result.err().unwrap();
+    assert_eq!(
+        no_transport_response,
+        "No transport found for message: NoTransportRequestName"
+    );
 }
